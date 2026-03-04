@@ -1,12 +1,11 @@
 import streamlit as st
 import pandas as pd
-#import google.generativeai as genai
-from groq import 
+from groq import Groq
 
 # Đọc file CSV
 df = pd.read_csv("silver_demo.csv")
 
-# Tóm tắt data — chỉ gửi phần quan trọng cho Gemini
+# Tóm tắt data — chỉ gửi phần quan trọng
 summary = f"""
 Dữ liệu giá bạc (XAG/USD) gồm {len(df)} phiên giao dịch.
 Thời gian: {df['Date'].iloc[0]} đến {df['Date'].iloc[-1]}
@@ -21,35 +20,42 @@ Thống kê:
 {df.tail(10).to_string(index=False)}
 """
 
-# Lấy API key từ Streamlit Secrets (an toàn hơn hardcode)
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-model = genai.GenerativeModel("gemini-1.5-flash")
+# Kết nối Groq
+client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+
 # Giao diện
 st.title("📊 Chatbot Dự báo Giá Bạc")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Hiện lịch sử chat
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
+# Ô nhập câu hỏi
 user_input = st.chat_input("Hỏi về giá bạc...")
 
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
 
-    prompt = f"""Bạn là chuyên gia phân tích giá bạc.
+    # Gửi cho Groq
+    response = client.chat.completions.create(
+        model="llama3-8b-8192",
+        messages=[
+            {
+                "role": "system",
+                "content": f"""Bạn là chuyên gia phân tích giá bạc.
 Dưới đây là dữ liệu nghiên cứu:
-
 {summary}
-
-Câu hỏi: {user_input}
-
 Trả lời bằng tiếng Việt, ngắn gọn và rõ ràng."""
+            },
+            *[{"role": m["role"], "content": m["content"]}
+              for m in st.session_state.messages]
+        ]
+    )
 
-    response = model.generate_content(prompt)
-    answer = response.text
-
+    answer = response.choices[0].message.content
     st.session_state.messages.append({"role": "assistant", "content": answer})
     st.rerun()
