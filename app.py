@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-import google.generativeai as genai
+#import google.generativeai as genai
+from groq import 
 
 # Đọc file CSV
 df = pd.read_csv("silver_demo.csv")
