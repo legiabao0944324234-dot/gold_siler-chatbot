@@ -21,7 +21,7 @@ Thống kê:
 """
 
 # Lấy API key từ Streamlit Secrets (an toàn hơn hardcode)
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+genai.configure(api_key=st.secrets["AIzaSyAaVzcM8TLm-LAu8EDRT35ZTLvNtQDVIds"])
 model = genai.GenerativeModel("gemini-2.0-flash")
 
 # Giao diện
